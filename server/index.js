@@ -2,7 +2,13 @@ const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
 const { Pool } = require('pg');
+const dns = require('dns');
 require('dotenv').config();
+
+// FIX: Force IPv4 to prevent Render/Supabase connection issues (ENETUNREACH)
+if (dns.setDefaultResultOrder) {
+    dns.setDefaultResultOrder('ipv4first');
+}
 
 const app = express();
 const PORT = process.env.PORT || 5000;

@@ -122,7 +122,7 @@ app.get('/api/stats', async (req, res) => {
 app.post('/api/auth/login', async (req, res) => {
     const { username, password } = req.body;
     const MASTER_USERNAME = process.env.ADMIN_USERNAME || 'admin';
-    const MASTER_PASSWORD = process.env.ADMIN_PASSWORD || 'trio2024';
+    const MASTER_PASSWORD = process.env.ADMIN_PASSWORD || 'trio1313';
 
     if (username === MASTER_USERNAME && password === MASTER_PASSWORD) {
         // Return a mock token for development

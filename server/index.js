@@ -41,7 +41,7 @@ app.get('/api/listings', async (req, res) => {
         res.json(transformed);
     } catch (err) {
         console.error(err);
-        res.status(500).json({ error: 'Database error' });
+        res.status(500).json({ error: 'Database error', details: err.message });
     }
 });
 

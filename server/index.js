@@ -23,6 +23,10 @@ const pool = new Pool({
 });
 
 // Routes
+app.get('/', (req, res) => {
+    res.send('Trio Emlak API Server is Running! 🚀');
+});
+
 app.get('/api/listings', async (req, res) => {
     try {
         const result = await pool.query('SELECT * FROM listings ORDER BY created_at DESC');

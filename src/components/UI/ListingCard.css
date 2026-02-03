@@ -1,52 +1,71 @@
 .listing-card {
-    background-color: white;
-    border-radius: var(--radius-md);
+    background: white;
+    border-radius: 12px;
     overflow: hidden;
-    box-shadow: var(--shadow-sm);
-    transition: all var(--transition-normal);
-    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    height: 100%;
     display: flex;
     flex-direction: column;
-    height: 100%;
-    border: 1px solid var(--color-border);
+    position: relative;
 }
 
 .listing-card:hover {
-    transform: translateY(-8px);
-    box-shadow: var(--shadow-lg);
-    border-color: var(--color-secondary);
+    transform: translateY(-5px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
 }
 
 .listing-image-container {
     position: relative;
-    height: 280px;
+    padding-top: 66.67%;
+    /* 3:2 Aspect Ratio */
+    background: #f3f4f6;
     overflow: hidden;
 }
 
 .listing-image {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.6s ease;
+    transition: transform 0.5s ease;
 }
 
 .listing-card:hover .listing-image {
-    transform: scale(1.08);
+    transform: scale(1.05);
 }
 
 .listing-tag {
     position: absolute;
-    top: 1rem;
-    left: 1rem;
-    background-color: var(--color-primary);
-    color: white;
-    padding: 0.4rem 1rem;
-    border-radius: var(--radius-sm);
+    top: 12px;
+    left: 12px;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 6px 12px;
+    border-radius: 6px;
     font-size: 0.75rem;
     font-weight: 600;
-    letter-spacing: 0.5px;
+    color: #1a365d;
     text-transform: uppercase;
-    z-index: 2;
+    letter-spacing: 0.5px;
+    backdrop-filter: blur(4px);
+}
+
+.listing-score {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .listing-overlay {
@@ -55,13 +74,12 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(to bottom, transparent 60%, rgba(0, 0, 0, 0.3));
+    background: rgba(0, 0, 0, 0.3);
     display: flex;
-    align-items: flex-end;
+    align-items: center;
     justify-content: center;
-    padding: 1.5rem;
     opacity: 0;
-    transition: opacity var(--transition-normal);
+    transition: opacity 0.3s ease;
 }
 
 .listing-card:hover .listing-overlay {
@@ -69,38 +87,32 @@
 }
 
 .view-details-btn {
-    background-color: white;
-    color: var(--color-primary);
-    padding: 0.75rem 1.75rem;
-    border-radius: var(--radius-md);
+    background: white;
+    color: #1a365d;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
     font-weight: 600;
-    font-size: 0.9rem;
-    transform: translateY(15px);
-    transition: all var(--transition-normal);
-    box-shadow: var(--shadow-md);
+    transform: translateY(20px);
+    transition: transform 0.3s ease;
 }
 
 .listing-card:hover .view-details-btn {
     transform: translateY(0);
 }
 
-.view-details-btn:hover {
-    background-color: var(--color-secondary);
-    color: white;
-}
-
 .listing-content {
     padding: 1.5rem;
+    flex: 1;
     display: flex;
     flex-direction: column;
-    flex-grow: 1;
 }
 
 .listing-title {
     font-size: 1.1rem;
-    margin-bottom: 0.75rem;
-    color: var(--color-primary);
-    font-weight: 700;
+    font-weight: 600;
+    color: #1a365d;
+    margin-bottom: 0.5rem;
     line-height: 1.4;
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -109,64 +121,81 @@
 }
 
 .listing-location {
+    color: #64748b;
     font-size: 0.9rem;
-    color: var(--color-text-light);
-    margin-bottom: 1rem;
     display: flex;
     align-items: center;
-    gap: 0.4rem;
+    gap: 4px;
+    margin-bottom: 1rem;
 }
 
 .listing-features {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    font-size: 0.875rem;
-    color: var(--color-text-light);
-    margin-bottom: 1.25rem;
-    padding-bottom: 1.25rem;
-    border-bottom: 1px solid var(--color-border);
+    gap: 8px;
+    color: #475569;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
 }
 
 .separator {
-    color: var(--color-border);
-    font-weight: 300;
+    color: #cbd5e1;
 }
 
 .listing-footer {
     margin-top: auto;
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
+    padding-top: 1rem;
+    border-top: 1px solid #e2e8f0;
 }
 
 .listing-price {
-    font-size: 1.35rem;
-    font-weight: 800;
-    color: var(--color-secondary);
-    letter-spacing: -0.02em;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1e293b;
 }
 
 .like-btn {
-    font-size: 1.4rem;
     background: none;
     border: none;
+    font-size: 1.25rem;
     cursor: pointer;
-    transition: transform var(--transition-fast);
-    padding: 0.5rem;
-    border-radius: 50%;
-    width: 42px;
-    height: 42px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    color: #cbd5e1;
+    transition: color 0.3s ease;
+    padding: 4px;
 }
 
 .like-btn:hover {
-    background-color: rgba(197, 164, 126, 0.1);
-    transform: scale(1.15);
+    color: #e11d48;
 }
 
-.like-btn:active {
-    transform: scale(0.95);
+/* Skeleton Loading State */
+.listing-card.skeleton {
+    pointer-events: none;
+}
+
+.skeleton-image {
+    width: 100%;
+    height: 250px;
+    background: #e2e8f0;
+}
+
+.skeleton-text {
+    height: 1rem;
+    background: #e2e8f0;
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+}
+
+.skeleton-text.title {
+    height: 1.5rem;
+    width: 80%;
+}
+
+.skeleton-text.price {
+    height: 2rem;
+    width: 40%;
 }

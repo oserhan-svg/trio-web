@@ -44,6 +44,22 @@ const Lightbox = memo(({ images, initialIndex = 0, isOpen, onClose }) => {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [isOpen, handleKeyDown]);
 
+    // Smart Image Preloading
+    useEffect(() => {
+        if (!isOpen || !images || images.length <= 1) return;
+
+        const preloadImage = (index) => {
+            const img = new Image();
+            img.src = images[index];
+        };
+
+        const nextIndex = (currentIndex + 1) % images.length;
+        const prevIndex = (currentIndex - 1 + images.length) % images.length;
+
+        preloadImage(nextIndex);
+        preloadImage(prevIndex);
+    }, [currentIndex, images, isOpen]);
+
     if (!isOpen) return null;
 
     return (

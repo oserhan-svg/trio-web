@@ -1,5 +1,6 @@
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { LazyMotion, domAnimation } from 'framer-motion';
 import MainLayout from './components/Layout/MainLayout';
 import ErrorBoundary from './components/ErrorBoundary';
 import MetaTags from './components/MetaTags';
@@ -21,47 +22,51 @@ const PropertyDetails = lazy(() => import('./pages/PropertyDetails'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const UserControl = lazy(() => import('./pages/UserControl'));
 const Login = lazy(() => import('./pages/Login'));
+const ExternalListings = lazy(() => import('./pages/ExternalListings'));
 import ProtectedRoute from './components/Auth/ProtectedRoute';
 
 function App() {
   return (
-    <Router>
-      <ErrorBoundary>
-        <NotificationProvider>
-          <MetaTags />
-          <MainLayout>
-            <ScrollToTop />
-            <Suspense fallback={
-              <div className="loading-screen" aria-live="polite">
-                <div className="loading-spinner"></div>
-                Yükleniyor...
-              </div>
-            }>
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/portfoy-pazari" element={<PortfoyPazari />} />
-                <Route path="/trio-prime" element={<TrioPrime />} />
-                <Route path="/iletisim" element={<ContactPage />} />
-                <Route path="/login" element={<Login />} />
-                <Route
-                  path="/admin"
-                  element={
-                    <ProtectedRoute>
-                      <AdminDashboard />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route path="/hesabim" element={<UserControl />} />
-                <Route path="/:categoryId" element={<CategoryPage />} />
-                <Route path="/ilan/:id" element={<PropertyDetails />} />
-                {/* Fallback for other routes */}
-                <Route path="*" element={<Home />} />
-              </Routes>
-            </Suspense>
-          </MainLayout>
-        </NotificationProvider>
-      </ErrorBoundary>
-    </Router>
+    <LazyMotion features={domAnimation}>
+      <Router>
+        <ErrorBoundary>
+          <NotificationProvider>
+            <MetaTags />
+            <MainLayout>
+              <ScrollToTop />
+              <Suspense fallback={
+                <div className="loading-screen" aria-live="polite">
+                  <div className="loading-spinner"></div>
+                  Yükleniyor...
+                </div>
+              }>
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/portfoy-pazari" element={<PortfoyPazari />} />
+                  <Route path="/trio-prime" element={<TrioPrime />} />
+                  <Route path="/iletisim" element={<ContactPage />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route
+                    path="/admin"
+                    element={
+                      <ProtectedRoute>
+                        <AdminDashboard />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route path="/hesabim" element={<UserControl />} />
+                  <Route path="/firsatlar" element={<ExternalListings />} />
+                  <Route path="/:categoryId" element={<CategoryPage />} />
+                  <Route path="/ilan/:id" element={<PropertyDetails />} />
+                  {/* Fallback for other routes */}
+                  <Route path="*" element={<Home />} />
+                </Routes>
+              </Suspense>
+            </MainLayout>
+          </NotificationProvider>
+        </ErrorBoundary>
+      </Router>
+    </LazyMotion>
   );
 }
 

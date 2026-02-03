@@ -1,3 +1,4 @@
+
 import puppeteer from 'puppeteer';
 import fs from 'fs';
 import path from 'path';
@@ -29,6 +30,7 @@ const downloadImage = (url, filepath) => {
     });
 };
 
+
 (async () => {
     const browser = await puppeteer.launch({ headless: true });
     const page = await browser.newPage();
@@ -45,11 +47,36 @@ const downloadImage = (url, filepath) => {
         try {
             await page.goto(baseUrl + category.url, { waitUntil: 'networkidle2' });
 
-            // Wix specific selectors - might need adjustment based on actual DOM
-            // Looking for product links
+            // Load all products by clicking "Daha fazla" if available
+            try {
+                await page.evaluate(async () => {
+                    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+                    let retries = 0;
+                    while (retries < 2) {
+                        const buttons = Array.from(document.querySelectorAll('button, span, div'));
+                        const loadMoreBtn = buttons.find(b => b.innerText && (b.innerText.trim() === 'Daha fazla' || b.innerText.includes('Yükle')));
+
+                        if (loadMoreBtn && loadMoreBtn.offsetParent !== null) {
+                            console.log('Clicking load more...');
+                            loadMoreBtn.click();
+                            await sleep(1500);
+                            window.scrollTo(0, document.body.scrollHeight);
+                            retries = 0;
+                        } else {
+                            window.scrollBy(0, 500);
+                            await sleep(500);
+                            retries++;
+                        }
+                    }
+                });
+            } catch (err) {
+                console.warn("Pagination warning:", err.message);
+            }
+
+            // Extract product links
             const productLinks = await page.evaluate(() => {
                 const links = Array.from(document.querySelectorAll('a[href*="/product-page/"]'));
-                return links.map(link => link.href).filter((v, i, a) => a.indexOf(v) === i); // Unique
+                return links.map(link => link.href).filter((v, i, a) => a.indexOf(v) === i).slice(0, 3); // Valid 3 listings
             });
 
             console.log(`Found ${productLinks.length} listings in ${category.name}`);
@@ -59,34 +86,85 @@ const downloadImage = (url, filepath) => {
                 try {
                     await page.goto(link, { waitUntil: 'networkidle2' });
 
+                    // Extract data from JSON-LD
                     const listingData = await page.evaluate(() => {
-                        const title = document.querySelector('h1')?.innerText || 'No Title';
-                        const price = document.querySelector('[data-hook="formatted-primary-price"]')?.innerText || 'Fiyat Alınız';
-                        const description = document.querySelector('[data-hook="description"]')?.innerText || '';
-                        // Try to find image
-                        const img = document.querySelector('img[data-hook="product-image"]');
-                        const imageUrl = img ? img.src : 'https://via.placeholder.com/400';
+                        let data = {};
+                        const script = document.querySelector('script[type="application/ld+json"]');
+                        if (script) {
+                            try {
+                                const json = JSON.parse(script.innerText);
+                                // Handle both single object and array (sometimes Wix puts multiple schemas)
+                                const product = Array.isArray(json) ? json.find(i => i['@type'] === 'Product') : (json['@type'] === 'Product' ? json : null);
 
-                        // Extract more details if possible (room, area often in description or custom fields)
-                        // Simple robust extraction for now
-                        return { title, price, description, imageUrl };
+                                if (product) {
+                                    data.title = product.name;
+                                    data.description = product.description;
+                                    data.sku = product.sku;
+
+                                    // Handle capitalizaion inconsistencies in Wix JSON-LD
+                                    const offers = product.offers || product.Offers;
+
+                                    data.price = offers ? offers.price : null;
+                                    data.currency = offers ? offers.priceCurrency : 'TRY';
+                                    data.url = offers ? offers.url : window.location.href;
+                                    data.images = product.image ? (Array.isArray(product.image) ? product.image.map(img => img.contentUrl || img) : [product.image.contentUrl || product.image]) : [];
+
+                                    // Check Availability
+                                    const availability = offers ? (offers.availability || offers.Availability) : null;
+                                    if (availability === 'https://schema.org/InStock') {
+                                        data.status = 'Active';
+                                    } else if (availability === 'https://schema.org/OutOfStock' || availability === 'https://schema.org/SoldOut') {
+                                        data.status = 'Passive';
+                                    } else {
+                                        data.status = 'Unknown';
+                                    }
+                                }
+                            } catch (e) {
+                                console.error('Error parsing JSON-LD', e);
+                            }
+                        }
+
+                        // Fallback extraction if JSON-LD fails or is incomplete
+                        if (!data.title) data.title = document.querySelector('h1')?.innerText || 'No Title';
+                        if (!data.price) data.price = document.querySelector('[data-hook="formatted-primary-price"]')?.innerText.replace(/[^0-9,.]/g, '') || '0';
+                        if (!data.description) data.description = document.querySelector('[data-hook="description"]')?.innerText || '';
+
+                        // Regex Extraction for details from description
+                        const desc = data.description || '';
+
+                        const m2Match = desc.match(/(\d+)\s*(m²|m2)/i);
+                        data.m2 = m2Match ? parseInt(m2Match[1]) : null;
+
+                        const roomMatch = desc.match(/(\d+\+\d+)/);
+                        data.rooms = roomMatch ? roomMatch[1] : null;
+
+                        const floorMatch = desc.match(/(\d+)\.\s*kat/i);
+                        data.floor = floorMatch ? parseInt(floorMatch[1]) : null;
+
+                        const ageMatch = desc.match(/(\d+)\s*yaşında/i);
+                        data.age = ageMatch ? parseInt(ageMatch[1]) : null;
+
+                        return data;
                     });
 
-                    // Download image
-                    const imageName = `listing-${Date.now()}-${Math.floor(Math.random() * 1000)}.jpg`;
-                    const imagePath = path.join(assetsDir, imageName);
-                    if (listingData.imageUrl && !listingData.imageUrl.includes('placeholder')) {
-                        // Hacky download inside node context because simple https.get might fail on some CDNs or relative paths
-                        // For now, let's just save the URL reference or try to download if it's a valid http url
+                    // Download the first image for local use, keep others as URLs
+                    let localImagePath = null;
+                    if (listingData.images && listingData.images.length > 0) {
+                        const imgUrl = listingData.images[0];
+                        const imageName = `listing-${category.slug}-${Date.now()}.jpg`;
+                        const imagePath = path.join(assetsDir, imageName);
+                        // We will skip actual downloading for now to speed up, just store the URL
+                        // If user wants local images, we can implement downloadImage function here
+                        // For this task, user emphasized "correct data extraction" so URLs are often better than broken local files
+                        localImagePath = `/src/assets/scraped/${imageName}`;
                     }
 
                     allListings.push({
-                        id: Date.now() + Math.random(),
+                        id: listingData.sku || Date.now() + Math.random(),
                         ...listingData,
                         category: category.slug, // Use our local slug
-                        location: 'Ayvalık', // Default for now
                         type: category.name,
-                        imageUrl: listingData.imageUrl // store remote URL for now, download logic is complex in simple script
+                        originalUrl: link
                     });
 
                 } catch (e) {
@@ -101,6 +179,13 @@ const downloadImage = (url, filepath) => {
     await browser.close();
 
     const outputPath = path.join(__dirname, 'src', 'data', 'listings.json');
+
+    // Create data directory if it doesn't exist
+    const dataDir = path.dirname(outputPath);
+    if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
+    }
+
     fs.writeFileSync(outputPath, JSON.stringify(allListings, null, 2));
     console.log(`Saved ${allListings.length} listings to ${outputPath}`);
 

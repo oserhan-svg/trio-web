@@ -4,13 +4,15 @@ import { TrashIcon, EditIcon, ExternalLinkIcon } from '../UI/Icons';
 import { useNotification } from '../UI/NotificationSystem';
 import useListings from '../../hooks/useListings';
 import SkeletonLoader from '../UI/SkeletonLoader';
+import ListingRow from './ListingRow';
 import config from '../../config';
 
 const ListingManager = () => {
-    const { allListings: listings, loading, refreshCache } = useListings();
+    const { allListings: listings, loading, refreshCache, updateListing, removeListing } = useListings();
     const { showNotification } = useNotification();
 
-    const handleStatusChange = async (id, newStatus) => {
+    // Use callbacks to ensure stable references for child components
+    const handleStatusChange = React.useCallback(async (id, newStatus) => {
         try {
             const response = await fetch(`${config.API_BASE_URL}/listings/${id}/status`, {
                 method: 'PATCH',
@@ -19,16 +21,16 @@ const ListingManager = () => {
             });
 
             if (response.ok) {
-                // Update cache globally so changes reflect everywhere
-                refreshCache();
+                // Optimistic update
+                updateListing(id, { status: newStatus });
                 showNotification(`Durum ${newStatus} olarak güncellendi`);
             }
         } catch (error) {
             showNotification('Güncelleme başarısız', 'error');
         }
-    };
+    }, [updateListing, showNotification]);
 
-    const handleDelete = async (id) => {
+    const handleDelete = React.useCallback(async (id) => {
         if (!window.confirm('Bu ilanı tamamen silmek istediğinize emin misiniz?')) return;
 
         try {
@@ -37,13 +39,14 @@ const ListingManager = () => {
             });
 
             if (response.ok) {
-                refreshCache();
+                // Optimistic update
+                removeListing(id);
                 showNotification('İlan silindi');
             }
         } catch (error) {
             showNotification('Silme işlemi başarısız', 'error');
         }
-    };
+    }, [removeListing, showNotification]);
 
     if (loading && listings.length === 0) {
         return (
@@ -89,40 +92,12 @@ const ListingManager = () => {
                     </thead>
                     <tbody>
                         {listings.map(listing => (
-                            <tr key={listing.id}>
-                                <td>
-                                    <div className="admin-listing-info">
-                                        <img src={listing.imageUrl} alt="" className="admin-thumb" />
-                                        <div>
-                                            <div className="admin-listing-title">{listing.title}</div>
-                                            <div className="admin-listing-id">ID: {listing.id}</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>{listing.price}</td>
-                                <td>{listing.type}</td>
-                                <td>
-                                    <select
-                                        className={`status-select ${listing.status}`}
-                                        value={listing.status}
-                                        onChange={(e) => handleStatusChange(listing.id, e.target.value)}
-                                    >
-                                        <option value="active">Yayında</option>
-                                        <option value="sold">Satıldı</option>
-                                        <option value="passive">Pasif</option>
-                                    </select>
-                                </td>
-                                <td>
-                                    <div className="admin-actions">
-                                        <button onClick={() => window.open(`/ilan/${listing.id}`, '_blank')} title="Görüntüle">
-                                            <ExternalLinkIcon size={18} />
-                                        </button>
-                                        <button className="delete-btn" onClick={() => handleDelete(listing.id)} title="Sil">
-                                            <TrashIcon size={18} />
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
+                            <ListingRow
+                                key={listing.id}
+                                listing={listing}
+                                onStatusChange={handleStatusChange}
+                                onDelete={handleDelete}
+                            />
                         ))}
                     </tbody>
                 </table>

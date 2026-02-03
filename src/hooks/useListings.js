@@ -58,11 +58,17 @@ const useListings = () => {
             if (!response.ok) throw new Error('İlanlar yüklenirken bir hata oluştu');
             const data = await response.json();
 
+            // Pre-calculate numeric price for efficient filtering
+            const normalizedData = data.map(item => ({
+                ...item,
+                priceNumeric: parseInt(item.price?.split(',')[0]?.replace(/[^\d]/g, '')) || 0
+            }));
+
             // Update cache
-            listingsCache = data;
+            listingsCache = normalizedData;
             lastFetchTime = now;
 
-            setListings(data);
+            setListings(normalizedData);
             setError(null);
         } catch (err) {
             console.error('Error fetching listings:', err);
@@ -107,10 +113,7 @@ const useListings = () => {
 
     // Memoize filtered listings using debounced filters
     const filteredListings = useMemo(() => {
-        let filtered = [...listings].map(item => ({
-            ...item,
-            isFavorite: favorites.includes(item.id)
-        }));
+        let filtered = listings;
 
         // Keyword/Search filter
         if (debouncedFilters.searchTerm) {
@@ -135,10 +138,7 @@ const useListings = () => {
         }
 
         if (debouncedFilters.priceMax) {
-            filtered = filtered.filter(l => {
-                const price = parseInt(l.price?.split(',')[0]?.replace(/[^\d]/g, '')) || 0;
-                return price <= debouncedFilters.priceMax;
-            });
+            filtered = filtered.filter(l => l.priceNumeric <= debouncedFilters.priceMax);
         }
 
         if (debouncedFilters.amenities?.length > 0) {
@@ -147,7 +147,11 @@ const useListings = () => {
             );
         }
 
-        return filtered;
+        // Map for favorites only on the filtered result
+        return filtered.map(item => ({
+            ...item,
+            isFavorite: favorites.includes(item.id)
+        }));
     }, [listings, debouncedFilters, favorites]);
 
     const handleFilterChange = useCallback((newFilters) => {
@@ -172,10 +176,36 @@ const useListings = () => {
         setFilters(defaultFilters);
     }, []);
 
+    const updateListing = useCallback((id, updates) => {
+        // Update local state
+        setListings(prev => prev.map(item =>
+            item.id === id ? { ...item, ...updates } : item
+        ));
+
+        // Update cache if it exists
+        if (listingsCache) {
+            listingsCache = listingsCache.map(item =>
+                item.id === id ? { ...item, ...updates } : item
+            );
+        }
+    }, []);
+
+    const removeListing = useCallback((id) => {
+        // Update local state
+        setListings(prev => prev.filter(item => item.id !== id));
+
+        // Update cache if it exists
+        if (listingsCache) {
+            listingsCache = listingsCache.filter(item => item.id !== id);
+        }
+    }, []);
+
     return {
         listings: filteredListings,
         allListings: listings, // Exposed for Admin
         refreshCache,          // Exposed for Admin
+        updateListing,         // New: for optimistic updates
+        removeListing,         // New: for optimistic deletions
         filters,
         favorites,
         handleFilterChange,

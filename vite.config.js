@@ -22,7 +22,6 @@ export default defineConfig({
           // Separate vendor chunks for better caching
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
           'framer-motion': ['framer-motion'],
-          'leaflet-vendor': ['leaflet', 'react-leaflet'],
         },
       },
     },

@@ -1,13 +1,13 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import ListingCard from '../components/UI/ListingCard';
+import SkeletonLoader from '../components/UI/SkeletonLoader';
+import useListings from '../hooks/useListings';
 import './PageStyles.css';
-import listingsData from '../data/listings.json';
-
-const allListings = listingsData;
 
 const CategoryPage = () => {
     const { categoryId } = useParams();
+    const { allListings, loading } = useListings();
 
     // Map URL slug to readable title
     const categoryTitles = {
@@ -19,7 +19,27 @@ const CategoryPage = () => {
     };
 
     const title = categoryTitles[categoryId] || 'Tüm İlanlar';
+
+    // Filter listings based on the category ID from URL
     const filteredListings = allListings.filter(l => l.category === categoryId);
+
+    if (loading) {
+        return (
+            <div className="page-container">
+                <div className="page-header">
+                    <h1>{title}</h1>
+                    <div className="skeleton-text" style={{ width: '300px', height: '20px', margin: '1rem auto', background: '#f0f0f0' }}></div>
+                </div>
+                <div className="listings-grid" style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+                    gap: '2rem'
+                }}>
+                    <SkeletonLoader type="card" count={6} />
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="page-container">

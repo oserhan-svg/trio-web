@@ -1,7 +1,7 @@
 import React from 'react';
 import './ListingCard.css';
 
-const ListingCard = ({ title, price, location, room, area, imageUrl, type }) => {
+const ListingCard = ({ title, price, location, room, area, imageUrl, type, score }) => {
     // Use a fallback image if scraping failed or is placeholder
     const displayImage = (!imageUrl || imageUrl.includes('placeholder'))
         ? 'https://via.placeholder.com/400x300?text=Trio+Emlak'
@@ -20,6 +20,11 @@ const ListingCard = ({ title, price, location, room, area, imageUrl, type }) => 
                     onError={(e) => { e.target.src = 'https://via.placeholder.com/400x300?text=Resim+Yok'; }}
                 />
                 <span className="listing-tag">{type}</span>
+                {score && parseInt(score) > 0 && (
+                    <span className="listing-score" title="Fırsat Puanı">
+                        ★ {score}
+                    </span>
+                )}
                 <div className="listing-overlay">
                     <button className="view-details-btn">İncele</button>
                 </div>

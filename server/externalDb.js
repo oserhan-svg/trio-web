@@ -1,5 +1,11 @@
 const { Pool } = require('pg');
+const dns = require('dns');
 require('dotenv').config();
+
+// Fix for Render/Supabase IPv6 issues (ENETUNREACH)
+if (dns.setDefaultResultOrder) {
+    dns.setDefaultResultOrder('ipv4first');
+}
 
 // Configuration for the external database
 // These values should be provided in the .env file

@@ -1,0 +1,227 @@
+.search-hero-elegant {
+    padding: 10rem 2rem 6rem;
+    min-height: 85vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    color: white;
+}
+
+.search-hero-elegant::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(197, 165, 114, 0.08) 0%, transparent 70%);
+    border-radius: 50%;
+}
+
+.search-hero-content-elegant {
+    max-width: 950px;
+    width: 100%;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+}
+
+.hero-badge-elegant {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.625rem;
+    background: white;
+    padding: 0.625rem 1.5rem;
+    border-radius: 50px;
+    box-shadow: var(--shadow-md);
+    margin-bottom: 2.5rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-text);
+    border: 1px solid var(--color-border-light);
+}
+
+.hero-badge-elegant svg {
+    color: var(--color-secondary);
+}
+
+.hero-title-elegant {
+    font-size: clamp(2.75rem, 6vw, 4.5rem);
+    font-weight: 800;
+    color: white;
+    margin-bottom: 1.25rem;
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+    text-shadow: 0 4px 16px rgba(0, 0, 0, 0.6), 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.gradient-text-elegant {
+    color: var(--color-secondary);
+}
+
+.hero-subtitle-elegant {
+    font-size: 1.125rem;
+    color: rgba(255, 255, 255, 0.95);
+    margin-bottom: 3.5rem;
+    line-height: 1.7;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    font-weight: 500;
+}
+
+.search-form-elegant {
+    background: white;
+    border-radius: var(--radius-xl);
+    padding: 1.125rem;
+    box-shadow: var(--shadow-elegant);
+    display: flex;
+    gap: 1.125rem;
+    margin-bottom: 3.5rem;
+    border: 1px solid var(--color-border-light);
+    transition: all var(--transition-normal);
+}
+
+.search-form-elegant:hover {
+    box-shadow: var(--shadow-xl);
+}
+
+.search-field-group-elegant {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+}
+
+.search-field-elegant {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    padding: 0 0.75rem;
+}
+
+.field-icon-svg {
+    color: var(--color-secondary);
+    flex-shrink: 0;
+}
+
+.search-input-elegant,
+.search-select-elegant {
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: 0.95rem;
+    color: var(--color-text);
+    font-weight: 500;
+    width: 100%;
+    padding: 0;
+    font-family: var(--font-family-base);
+}
+
+.search-input-elegant::placeholder {
+    color: var(--color-text-muted);
+    font-weight: 400;
+}
+
+.search-divider-elegant {
+    width: 1px;
+    height: 35px;
+    background-color: var(--color-border);
+}
+
+.search-btn-elegant {
+    background: var(--color-primary);
+    color: white;
+    padding: 1.125rem 2.75rem;
+    border-radius: var(--radius-lg);
+    font-weight: 700;
+    font-size: 1rem;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    white-space: nowrap;
+    box-shadow: var(--shadow-lg);
+    letter-spacing: 0.02em;
+}
+
+.search-btn-elegant svg {
+    flex-shrink: 0;
+}
+
+.hero-stats-elegant {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 3.5rem;
+}
+
+.stat-item-elegant {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.stat-number-elegant {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--color-secondary);
+    line-height: 1;
+    margin-bottom: 0.375rem;
+    font-family: var(--font-family-heading);
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+}
+
+.stat-label-elegant {
+    font-size: 0.9rem;
+    color: white;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.stat-divider-elegant {
+    width: 1px;
+    height: 50px;
+    background: linear-gradient(to bottom, transparent, var(--color-border), transparent);
+}
+
+@media (max-width: 768px) {
+    .search-hero-elegant {
+        padding: 7rem 1rem 4rem;
+    }
+
+    .search-form-elegant {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .search-field-group-elegant {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .search-divider-elegant {
+        display: none;
+    }
+
+    .search-btn-elegant {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .hero-stats-elegant {
+        flex-wrap: wrap;
+        gap: 2.5rem;
+    }
+
+    .stat-divider-elegant {
+        display: none;
+    }
+}

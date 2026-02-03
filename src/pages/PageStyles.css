@@ -1,0 +1,96 @@
+.page-container {
+    padding: 4rem 1.5rem;
+    max-width: 1000px;
+    margin: 0 auto;
+    min-height: 60vh;
+}
+
+.page-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.page-header h1 {
+    font-family: var(--font-family-heading);
+    font-size: 2.5rem;
+    color: var(--color-primary);
+    margin-bottom: 1rem;
+}
+
+.page-header p {
+    color: #666;
+    font-size: 1.1rem;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.content-section {
+    display: flex;
+    justify-content: center;
+}
+
+.subscription-card {
+    background-color: white;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-soft);
+    padding: 3rem;
+    text-align: center;
+    max-width: 600px;
+    width: 100%;
+}
+
+.highlight-text {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--color-secondary);
+    margin-bottom: 2rem;
+}
+
+.feature-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-bottom: 2.5rem;
+    text-align: left;
+}
+
+.feature-item .icon {
+    font-size: 2rem;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.feature-item h3 {
+    color: var(--color-text);
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+}
+
+.feature-item p {
+    font-size: 0.9rem;
+    color: #555;
+    line-height: 1.5;
+}
+
+.whatsapp-btn {
+    background-color: #25D366;
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: 50px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-block;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.whatsapp-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(37, 211, 102, 0.3);
+}
+
+@media (max-width: 768px) {
+    .feature-grid {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+}

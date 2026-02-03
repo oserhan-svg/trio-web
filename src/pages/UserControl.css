@@ -1,0 +1,68 @@
+.user-control-page {
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    min-height: 80vh;
+}
+
+.user-header {
+    margin-bottom: 3rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid var(--color-border-light);
+}
+
+.user-header h1 {
+    font-size: 2.5rem;
+    color: var(--color-primary);
+    font-family: var(--font-family-heading);
+    margin-bottom: 0.5rem;
+}
+
+.user-header p {
+    color: var(--color-text-light);
+    font-size: 1.1rem;
+}
+
+.section-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.section-title h2 {
+    font-size: 1.75rem;
+    color: var(--color-primary);
+    font-family: var(--font-family-heading);
+}
+
+.count-badge {
+    background: var(--color-secondary);
+    color: var(--color-primary);
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-full);
+    font-weight: 800;
+    font-size: 0.85rem;
+}
+
+.favorites-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 2rem;
+}
+
+.empty-favorites {
+    text-align: center;
+    padding: 10rem 2rem;
+    background: var(--color-bg-alt);
+    border-radius: var(--radius-lg);
+    border: 1px dashed var(--color-border-light);
+    color: var(--color-text-light);
+    font-size: 1.1rem;
+}
+
+@media (max-width: 768px) {
+    .favorites-grid {
+        grid-template-columns: 1fr;
+    }
+}

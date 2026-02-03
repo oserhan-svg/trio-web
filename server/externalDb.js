@@ -3,6 +3,14 @@ require('dotenv').config();
 
 // Configuration for the external database
 // These values should be provided in the .env file
+console.log('--- External DB Debug Info ---');
+console.log('HOST:', process.env.EXTERNAL_DB_HOST || '(NOT SET - Defaulting to localhost)');
+console.log('USER:', process.env.EXTERNAL_DB_USER || '(NOT SET)');
+console.log('DB:', process.env.EXTERNAL_DB_NAME || '(NOT SET)');
+console.log('PORT:', process.env.EXTERNAL_DB_PORT || '(NOT SET)');
+console.log('SSL:', process.env.EXTERNAL_DB_SSL || '(NOT SET)');
+console.log('------------------------------');
+
 const externalDbConfig = {
     user: process.env.EXTERNAL_DB_USER,
     host: process.env.EXTERNAL_DB_HOST,

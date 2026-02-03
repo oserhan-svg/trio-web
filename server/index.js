@@ -120,10 +120,11 @@ app.get('/api/stats', async (req, res) => {
 
 // Authentication Routes
 app.post('/api/auth/login', async (req, res) => {
-    const { password } = req.body;
+    const { username, password } = req.body;
+    const MASTER_USERNAME = process.env.ADMIN_USERNAME || 'admin';
     const MASTER_PASSWORD = process.env.ADMIN_PASSWORD || 'trio2024';
 
-    if (password === MASTER_PASSWORD) {
+    if (username === MASTER_USERNAME && password === MASTER_PASSWORD) {
         // Return a mock token for development
         res.json({
             success: true,
@@ -131,7 +132,7 @@ app.post('/api/auth/login', async (req, res) => {
             user: { role: 'admin', name: 'Trio Admin' }
         });
     } else {
-        res.status(401).json({ error: 'Giriş başarısız. Lütfen şifrenizi kontrol edin.' });
+        res.status(401).json({ error: 'Kullanıcı adı veya şifre hatalı.' });
     }
 });
 

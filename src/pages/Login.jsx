@@ -6,6 +6,7 @@ import config from '../config';
 import './Login.css';
 
 const Login = () => {
+    const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
@@ -22,7 +23,7 @@ const Login = () => {
             const response = await fetch(`${config.API_BASE_URL}/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ password })
+                body: JSON.stringify({ username, password })
             });
 
             const data = await response.json();
@@ -51,18 +52,27 @@ const Login = () => {
             >
                 <div className="login-header">
                     <h2>Yönetici Girişi</h2>
-                    <p>Lütfen devam etmek için şifrenizi girin.</p>
+                    <p>Devam etmek için giriş yapın.</p>
                 </div>
 
                 <form onSubmit={handleLogin} className="login-form">
                     <div className="input-group">
                         <input
+                            type="text"
+                            placeholder="Kullanıcı Adı"
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                            required
+                            autoFocus
+                        />
+                    </div>
+                    <div className="input-group">
+                        <input
                             type="password"
-                            placeholder="Şifreniz"
+                            placeholder="Şifre"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
-                            autoFocus
                         />
                     </div>
                     <button

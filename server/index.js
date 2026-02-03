@@ -49,6 +49,36 @@ const pool = new Pool({
     ssl: process.env.DB_HOST !== 'localhost' && process.env.DB_HOST !== '127.0.0.1' ? { rejectUnauthorized: false } : false
 });
 
+// Auto-run migration to fix "relation does not exist" on Render
+const initDb = async () => {
+    const SCHEMA = `
+    CREATE TABLE IF NOT EXISTS listings (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        price TEXT,
+        description TEXT,
+        full_description TEXT,
+        image_url TEXT,
+        category TEXT,
+        location TEXT,
+        type TEXT,
+        gallery JSONB DEFAULT '[]',
+        status TEXT DEFAULT 'active',
+        specs JSONB DEFAULT '{}',
+        features JSONB DEFAULT '[]',
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    );
+    `;
+    try {
+        await pool.query(SCHEMA);
+        console.log('Verified database schema.');
+    } catch (e) {
+        console.error('Failed to initialize DB:', e);
+    }
+};
+initDb();
+
 // Routes
 app.get('/', (req, res) => {
     res.send('Trio Emlak API Server is Running! 🚀');

@@ -12,7 +12,8 @@ import Lightbox from '../components/UI/Lightbox';
 import SkeletonLoader from '../components/UI/SkeletonLoader';
 import { useNotification } from '../components/UI/NotificationSystem';
 import { fetchPropertyDetail } from '../utils/api';
-import { formatRooms, formatArea, getListingStatus } from '../utils/listingUtils';
+import { formatRooms, formatArea, formatPrice, getListingStatus } from '../utils/listingUtils';
+import PageTransition from '../components/UI/PageTransition';
 import './PropertyDetails.css';
 
 const PropertyDetails = () => {
@@ -123,166 +124,168 @@ const PropertyDetails = () => {
     }
 
     return (
-        <div className="property-details-container">
-            <MetaTags
-                title={`${title} | ${price} | Trio Emlak`}
-                description={`${location} konumunda ${type}. ${beds} oda, ${area}. ${description?.substring(0, 100)}...`}
-            />
+        <PageTransition>
+            <div className="property-details-container">
+                <MetaTags
+                    title={`${title} | ${formatPrice(price)} | Trio Emlak`}
+                    description={`${location} konumunda ${type}. ${beds} oda, ${area}. ${description?.substring(0, 100)}...`}
+                />
 
-            <Lightbox
-                images={allImages}
-                initialIndex={lightboxIndex}
-                isOpen={isLightboxOpen}
-                onClose={() => setIsLightboxOpen(false)}
-            />
+                <Lightbox
+                    images={allImages}
+                    initialIndex={lightboxIndex}
+                    isOpen={isLightboxOpen}
+                    onClose={() => setIsLightboxOpen(false)}
+                />
 
-            <div className="details-header-nav">
-                <Link to="/" className="back-link">
-                    <ChevronLeftIcon size={20} />
-                    İlanlara Dön
-                </Link>
-            </div>
+                <div className="details-header-nav">
+                    <Link to="/" className="back-link">
+                        <ChevronLeftIcon size={20} />
+                        İlanlara Dön
+                    </Link>
+                </div>
 
-            <div className="details-layout">
-                {/* Visual Section */}
-                <section className="visual-section">
-                    <div className="main-gallery">
-                        <motion.div
-                            className="primary-image-wrapper"
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            onClick={() => openLightbox(0)}
-                            style={{ cursor: 'zoom-in' }}
-                        >
-                            <img src={displayImage} alt={title} className="primary-image" loading="eager" />
-                            {(isSold || isPassive) && (
-                                <div className="status-overlay-large">
-                                    {isSold ? 'SATILDI' : 'YAYINDA DEĞİL'}
+                <div className="details-layout">
+                    {/* Visual Section */}
+                    <section className="visual-section">
+                        <div className="main-gallery">
+                            <motion.div
+                                className="primary-image-wrapper"
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                onClick={() => openLightbox(0)}
+                                style={{ cursor: 'zoom-in' }}
+                            >
+                                <img src={displayImage} alt={title} className="primary-image" loading="eager" />
+                                {(isSold || isPassive) && (
+                                    <div className="status-overlay-large">
+                                        {isSold ? 'SATILDI' : 'YAYINDA DEĞİL'}
+                                    </div>
+                                )}
+                            </motion.div>
+
+                            <div className="thumbnail-grid">
+                                {gallery.slice(0, 4).map((img, index) => (
+                                    <motion.div
+                                        key={index}
+                                        className="thumb-wrapper"
+                                        whileHover={{ scale: 1.05, y: -5 }}
+                                        onClick={() => openLightbox(index + 1)}
+                                    >
+                                        <img src={img} alt={`${title} ${index + 1}`} loading="lazy" />
+                                    </motion.div>
+                                ))}
+                                {gallery.length > 4 && (
+                                    <div className="more-photos-overlay" onClick={() => openLightbox(4)}>
+                                        +{gallery.length - 4} Fotoğraf Daha
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="property-content-main">
+                            <div className="content-header">
+                                <span className="type-badge">{type}</span>
+                                <h1 className="details-title">{title}</h1>
+                                <p className="details-location">
+                                    <LocationIcon size={18} />
+                                    {location}
+                                </p>
+                            </div>
+
+                            <div className="details-description">
+                                <h3>Açıklama</h3>
+                                <div
+                                    className="description-text"
+                                    dangerouslySetInnerHTML={{ __html: fullDescription || description }}
+                                />
+                            </div>
+
+                            {features.length > 0 && (
+                                <div className="details-features">
+                                    <h3>Özellikler</h3>
+                                    <div className="features-grid">
+                                        {features.map((feat, i) => (
+                                            <div key={i} className="feature-item">
+                                                <span className="dot"></span>
+                                                {feat}
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             )}
-                        </motion.div>
+                        </div>
+                    </section>
 
-                        <div className="thumbnail-grid">
-                            {gallery.slice(0, 4).map((img, index) => (
-                                <motion.div
-                                    key={index}
-                                    className="thumb-wrapper"
-                                    whileHover={{ scale: 1.05, y: -5 }}
-                                    onClick={() => openLightbox(index + 1)}
+                    {/* Sidebar Section */}
+                    <aside className="sidebar-section">
+                        <div className="sticky-sidebar">
+                            <div className="price-card-elegant">
+                                <div className="price-label">Fiyat</div>
+                                <div className="price-value">{formatPrice(price)}</div>
+
+                                <motion.button
+                                    className="contact-btn primary"
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
+                                    onClick={handleWhatsApp}
                                 >
-                                    <img src={img} alt={`${title} ${index + 1}`} loading="lazy" />
-                                </motion.div>
-                            ))}
-                            {gallery.length > 4 && (
-                                <div className="more-photos-overlay" onClick={() => openLightbox(4)}>
-                                    +{gallery.length - 4} Fotoğraf Daha
-                                </div>
-                            )}
-                        </div>
-                    </div>
+                                    WhatsApp ile Bilgi Al
+                                </motion.button>
 
-                    <div className="property-content-main">
-                        <div className="content-header">
-                            <span className="type-badge">{type}</span>
-                            <h1 className="details-title">{title}</h1>
-                            <p className="details-location">
-                                <LocationIcon size={18} />
-                                {location}
-                            </p>
-                        </div>
+                                <motion.button
+                                    className="contact-btn secondary"
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
+                                    onClick={handleCall}
+                                >
+                                    Hemen Ara
+                                </motion.button>
+                            </div>
 
-                        <div className="details-description">
-                            <h3>Açıklama</h3>
-                            <div
-                                className="description-text"
-                                dangerouslySetInnerHTML={{ __html: fullDescription || description }}
-                            />
-                        </div>
-
-                        {features.length > 0 && (
-                            <div className="details-features">
-                                <h3>Özellikler</h3>
-                                <div className="features-grid">
-                                    {features.map((feat, i) => (
-                                        <div key={i} className="feature-item">
-                                            <span className="dot"></span>
-                                            {feat}
+                            <div className="specs-card-elegant">
+                                <h3>Teknik Detaylar</h3>
+                                <div className="specs-list">
+                                    <div className="spec-row">
+                                        <span className="spec-key">Oda Sayısı</span>
+                                        <span className="spec-val">{beds}</span>
+                                    </div>
+                                    <div className="spec-row">
+                                        <span className="spec-key">Metrekare</span>
+                                        <span className="spec-val">{area}</span>
+                                    </div>
+                                    {Object.entries(specs).map(([key, val], i) => (
+                                        <div key={i} className="spec-row">
+                                            <span className="spec-key">{key}</span>
+                                            <span className="spec-val">{val}</span>
                                         </div>
                                     ))}
                                 </div>
                             </div>
-                        )}
-                    </div>
-                </section>
 
-                {/* Sidebar Section */}
-                <aside className="sidebar-section">
-                    <div className="sticky-sidebar">
-                        <div className="price-card-elegant">
-                            <div className="price-label">Fiyat</div>
-                            <div className="price-value">{price}</div>
-
-                            <motion.button
-                                className="contact-btn primary"
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                                onClick={handleWhatsApp}
-                            >
-                                WhatsApp ile Bilgi Al
-                            </motion.button>
-
-                            <motion.button
-                                className="contact-btn secondary"
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                                onClick={handleCall}
-                            >
-                                Hemen Ara
-                            </motion.button>
-                        </div>
-
-                        <div className="specs-card-elegant">
-                            <h3>Teknik Detaylar</h3>
-                            <div className="specs-list">
-                                <div className="spec-row">
-                                    <span className="spec-key">Oda Sayısı</span>
-                                    <span className="spec-val">{beds}</span>
-                                </div>
-                                <div className="spec-row">
-                                    <span className="spec-key">Metrekare</span>
-                                    <span className="spec-val">{area}</span>
-                                </div>
-                                {Object.entries(specs).map(([key, val], i) => (
-                                    <div key={i} className="spec-row">
-                                        <span className="spec-key">{key}</span>
-                                        <span className="spec-val">{val}</span>
+                            <div className="agent-card-elegant">
+                                <div className="agent-info">
+                                    <div className="agent-avatar">TP</div>
+                                    <div>
+                                        <div className="agent-name">Trio Prime Gayrimenkul</div>
+                                        <div className="agent-title">Profesyonel Danışmanlık</div>
                                     </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="agent-card-elegant">
-                            <div className="agent-info">
-                                <div className="agent-avatar">TP</div>
-                                <div>
-                                    <div className="agent-name">Trio Prime Gayrimenkul</div>
-                                    <div className="agent-title">Profesyonel Danışmanlık</div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </aside>
-            </div>
+                    </aside>
+                </div>
 
-            {/* Mobile Sticky Bar */}
-            <div className="mobile-contact-bar">
-                <div className="mobile-price">{price}</div>
-                <div className="mobile-actions">
-                    <button className="mobile-whatsapp" onClick={handleWhatsApp}>WhatsApp</button>
-                    <button className="mobile-call" onClick={handleCall}>Ara</button>
+                {/* Mobile Sticky Bar */}
+                <div className="mobile-contact-bar">
+                    <div className="mobile-price">{formatPrice(price)}</div>
+                    <div className="mobile-actions">
+                        <button className="mobile-whatsapp" onClick={handleWhatsApp}>WhatsApp</button>
+                        <button className="mobile-call" onClick={handleCall}>Ara</button>
+                    </div>
                 </div>
             </div>
-        </div>
+        </PageTransition>
     );
 };
 

@@ -25,15 +25,20 @@ async function getPool() {
     let host = process.env.EXTERNAL_DB_HOST;
 
     // Manual IPv4 Resolution to bypass ENETUNREACH
-    try {
-        console.log(`Resolving DNS for ${host}...`);
-        const resolver = await dnsPromises.resolve4(host);
-        if (resolver && resolver.length > 0) {
-            console.log(`Resolved ${host} to ${resolver[0]}`);
-            host = resolver[0];
+    // Only attempt if it looks like a hostname, not an IP
+    const isIP = /^(?:\d{1,3}\.){3}\d{1,3}$/.test(host);
+
+    if (host && !isIP) {
+        try {
+            console.log(`Resolving DNS for ${host}...`);
+            const resolver = await dnsPromises.resolve4(host);
+            if (resolver && resolver.length > 0) {
+                console.log(`Resolved ${host} to ${resolver[0]}`);
+                host = resolver[0];
+            }
+        } catch (e) {
+            console.error('DNS Resolution failed, using original host:', e.message);
         }
-    } catch (e) {
-        console.error('DNS Resolution failed, using original host:', e.message);
     }
 
     const config = {

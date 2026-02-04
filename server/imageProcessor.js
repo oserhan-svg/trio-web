@@ -30,59 +30,63 @@ async function downloadImage(url) {
 
 /**
  * Removes watermark using Python OpenCV script (Inpainting)
+ * Fallback: Uses sharp to apply subtle blur/crop if Python fails
  * @param {Buffer} buffer 
  * @returns {Promise<Buffer>}
  */
 async function removeWatermark(buffer) {
-    return new Promise((resolve, reject) => {
-        // Create temporary files
+    // Attempt Python Inpainting first
+    const pythonResult = await new Promise((resolve) => {
         const tempDir = os.tmpdir();
         const inputPath = path.join(tempDir, `input_${Date.now()}.jpg`);
         const outputPath = path.join(tempDir, `output_${Date.now()}.jpg`);
 
         fs.writeFileSync(inputPath, buffer);
 
-        // Spawn Python process
-        // Assumption: 'python' is in PATH. If 'python3', adjust command.
         const pythonProcess = spawn('python', [
             path.join(__dirname, 'watermark_remover.py'),
             inputPath,
             outputPath
         ]);
 
-        let errorOutput = '';
-
-        pythonProcess.stderr.on('data', (data) => {
-            errorOutput += data.toString();
-        });
-
         pythonProcess.on('close', (code) => {
             if (code !== 0) {
-                // Cleanup
                 if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);
                 if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
-
-                console.error(`Python Error: ${errorOutput}`);
-                // Fallback: If python fails (e.g. not installed), return original buffer or throw?
-                // Let's fallback to original for improved resilience
-                console.warn('Falling back to original image due to Python error.');
-                resolve(buffer);
+                resolve(null);
                 return;
             }
-
             try {
-                // Read processed image
                 const processedBuffer = fs.readFileSync(outputPath);
                 resolve(processedBuffer);
-            } catch (err) {
-                reject(err);
+            } catch {
+                resolve(null);
             } finally {
-                // Cleanup
                 if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);
                 if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
             }
         });
     });
+
+    if (pythonResult) return pythonResult;
+
+    // Fast Path Fallback: Sharp-based subtle crop/blur for bottom area
+    console.warn('Using Fast Path (Sharp) for watermark obscuration.');
+    const metadata = await sharp(buffer).metadata();
+    const watermarkHeight = Math.floor(metadata.height * 0.12); // Branding is usually in bottom 12%
+
+    return await sharp(buffer)
+        .extract({
+            left: 0,
+            top: 0,
+            width: metadata.width,
+            height: metadata.height - Math.floor(watermarkHeight / 2)
+        }) // Slight crop
+        .extend({
+            bottom: Math.floor(watermarkHeight / 2),
+            background: { r: 255, g: 255, b: 255, alpha: 1 }
+        }) // Padding
+        .toBuffer();
 }
 
 /**
@@ -116,40 +120,42 @@ async function uploadToStorage(buffer, filename) {
  * Main Processor Function
  */
 async function processListingImages(listingId, imageUrls) {
-    const newUrls = [];
+    console.log(`Starting parallel processing for ${listingId} (${imageUrls.length} images)`);
 
-    for (let i = 0; i < imageUrls.length; i++) {
-        const url = imageUrls[i];
-        if (!url) continue;
+    // Concurrency limit of 3 to avoid overloading memory/CPU
+    const CONCURRENCY = 3;
+    const results = [];
 
-        try {
-            console.log(`Processing ${listingId} - Image ${i + 1}...`);
+    for (let i = 0; i < imageUrls.length; i += CONCURRENCY) {
+        const chunk = imageUrls.slice(i, i + CONCURRENCY);
+        const chunkPromises = chunk.map(async (url, index) => {
+            const actualIndex = i + index;
+            if (!url) return null;
 
-            // 1. Download
-            const rawBuffer = await downloadImage(url);
+            try {
+                // 1. Download
+                const rawBuffer = await downloadImage(url);
 
-            // 2. Crop & Convert to WebP
-            const processedBuffer = await removeWatermark(rawBuffer);
+                // 2. Process & Convert to WebP
+                const processedBuffer = await removeWatermark(rawBuffer);
+                const webpBuffer = await sharp(processedBuffer)
+                    .webp({ quality: 80 })
+                    .toBuffer();
 
-            // Convert to WebP for optimization
-            const webpBuffer = await sharp(processedBuffer)
-                .webp({ quality: 80 }) // Good balance of quality and size
-                .toBuffer();
+                // 3. Upload
+                const filename = `listings/${listingId}/${Date.now()}_${actualIndex}.webp`;
+                return await uploadToStorage(webpBuffer, filename);
+            } catch (err) {
+                console.error(`Error processing image ${actualIndex}:`, err.message);
+                return null;
+            }
+        });
 
-            // 3. Upload
-            const filename = `listings/${listingId}/${Date.now()}_${i}.webp`;
-            const publicUrl = await uploadToStorage(webpBuffer, filename);
-
-            newUrls.push(publicUrl);
-            console.log(`> Uploaded: ${publicUrl}`);
-
-        } catch (err) {
-            console.error(`Error processing image ${url}:`, err.message);
-            // newUrls.push(url); // Option: Keep original if fail
-        }
+        const chunkResults = await Promise.all(chunkPromises);
+        results.push(...chunkResults);
     }
 
-    return newUrls;
+    return results.filter(url => url !== null);
 }
 
 module.exports = { processListingImages };

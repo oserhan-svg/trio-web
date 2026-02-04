@@ -44,6 +44,16 @@ export const formatArea = (description, title) => {
 };
 
 /**
+ * Formats price string for display by removing decimal parts (e.g., ,00)
+ * @param {string} price 
+ * @returns {string}
+ */
+export const formatPrice = (price) => {
+    if (!price) return '---';
+    return price.replace(/,00(?!\d)/g, '');
+};
+
+/**
  * Calculates unit price per m2
  */
 export const calculateUnitPrice = (price, description, title) => {

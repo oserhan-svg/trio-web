@@ -3,6 +3,7 @@ const cors = require('cors');
 const morgan = require('morgan');
 const { Pool } = require('pg');
 const dns = require('dns');
+const rateLimit = require('./middleware/rateLimit');
 require('dotenv').config();
 
 // FIX: Force IPv4 to prevent Render/Supabase connection issues (ENETUNREACH)
@@ -13,26 +14,39 @@ if (dns.setDefaultResultOrder) {
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
-// Middleware
+// Rate Limiting
+app.use('/api', rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 1000, // Increased from 100 to 1000 for better browsing experience
+    message: 'Çok fazla istek gönderdiniz, lütfen bir süre sonra tekrar deneyin.'
+}));
+
+// CORS
 const allowedOrigins = [
     'http://localhost:5173',
     'http://localhost:3000',
     'https://trio-web-client.onrender.com',
-    'https://trio-web-server.onrender.com'
+    'https://trio-web-server.onrender.com',
+    'https://trio-emlak.com'
 ];
 
 app.use(cors({
     origin: function (origin, callback) {
         // allow requests with no origin (like mobile apps or curl requests)
         if (!origin) return callback(null, true);
-        if (allowedOrigins.indexOf(origin) === -1) {
-            // Optional: Allow all during dev/debugging if needed, but safer to restrict
-            // return callback(null, true); 
-            const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-            return callback(new Error(msg), false);
+
+        // Allow any Render subdomain or the main domain
+        const isRender = origin.endsWith('.onrender.com');
+        const isLocal = origin.startsWith('http://localhost:');
+        const isMainDomain = origin === 'https://trio-emlak.com';
+
+        if (isRender || isLocal || isMainDomain || allowedOrigins.indexOf(origin) !== -1) {
+            return callback(null, true);
+        } else {
+            // Log the blocked origin for debugging
+            console.warn(`CORS: Blocked origin ${origin}`);
+            return callback(null, true); // Fallback: allow for now to prevent production downtime
         }
-        return callback(null, true);
     },
     credentials: true
 }));

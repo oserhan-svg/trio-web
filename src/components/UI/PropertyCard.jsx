@@ -8,6 +8,7 @@ import { prefetchProperty } from '../../utils/api';
 import {
     formatRooms,
     formatArea,
+    formatPrice,
     calculateUnitPrice,
     getListingStatus
 } from '../../utils/listingUtils';
@@ -99,7 +100,7 @@ const PropertyCard = memo(({ id, title, price, location, imageUrl, type, descrip
                 </div>
 
                 <div className="property-price-overlay-elegant">
-                    {price}
+                    {formatPrice(price)}
                     {unitPrice && <span className="unit-price-elegant">{unitPrice}</span>}
                 </div>
 

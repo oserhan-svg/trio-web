@@ -1,5 +1,6 @@
 import React from 'react';
 import './ListingCard.css';
+import { formatPrice } from '../../utils/listingUtils';
 
 const ListingCard = ({ title, price, location, room, area, imageUrl, type, score }) => {
     // Use a fallback image if scraping failed or is placeholder
@@ -45,7 +46,7 @@ const ListingCard = ({ title, price, location, room, area, imageUrl, type, score
                     {area && <span>{area}</span>}
                 </div>
                 <div className="listing-footer">
-                    <span className="listing-price">{price}</span>
+                    <span className="listing-price">{formatPrice(price)}</span>
                     <button className="like-btn" title="Favorilere Ekle">
                         🤍
                     </button>

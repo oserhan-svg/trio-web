@@ -3,8 +3,16 @@
  */
 const config = {
     // API base URL for development and production
-    // You can also use import.meta.env for Vite environment variables
-    API_BASE_URL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api',
+    // Automatically switch between localhost and production server based on current domain
+    API_BASE_URL: (function () {
+        if (typeof window !== 'undefined') {
+            const hostname = window.location.hostname;
+            if (hostname === 'trio-web-client.onrender.com' || hostname === 'trio-emlak.com') {
+                return 'https://trio-web-server.onrender.com/api';
+            }
+        }
+        return import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+    })(),
 
     // Cache configuration
     CACHE_DURATION_MS: 5 * 60 * 1000, // 5 minutes

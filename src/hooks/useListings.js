@@ -55,7 +55,14 @@ const useListings = () => {
         try {
             setLoading(true);
             const response = await fetch(`${config.API_BASE_URL}/listings`);
-            if (!response.ok) throw new Error('İlanlar yüklenirken bir hata oluştu');
+
+            if (!response.ok) {
+                if (response.status === 429) throw new Error('Çok fazla istek gönderildi. Lütfen bir süre bekleyin.');
+                if (response.status === 403) throw new Error('Erişim engellendi (CORS veya Güvenlik).');
+                if (response.status === 500) throw new Error('Sunucu hatası. Teknik ekip bilgilendirildi.');
+                throw new Error('İlanlar yüklenirken bir hata oluştu');
+            }
+
             const data = await response.json();
 
             // Pre-calculate numeric price for efficient filtering

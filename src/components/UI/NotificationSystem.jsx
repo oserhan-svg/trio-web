@@ -1,4 +1,4 @@
-import { useState, useCallback, memo, createContext, useContext } from 'react';
+import { useState, useCallback, createContext, useContext } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import PropTypes from 'prop-types';
 

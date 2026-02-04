@@ -11,7 +11,6 @@ const Lightbox = memo(({ images, initialIndex = 0, isOpen, onClose }) => {
 
     useEffect(() => {
         if (isOpen) {
-            setCurrentIndex(initialIndex);
             document.body.style.overflow = 'hidden';
         } else {
             document.body.style.overflow = 'unset';
@@ -19,7 +18,7 @@ const Lightbox = memo(({ images, initialIndex = 0, isOpen, onClose }) => {
         return () => {
             document.body.style.overflow = 'unset';
         };
-    }, [isOpen, initialIndex]);
+    }, [isOpen]);
 
     const handleNext = useCallback((e) => {
         e?.stopPropagation();

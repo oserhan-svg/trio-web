@@ -15,9 +15,14 @@ const ListingCard = ({ title, price, location, room, area, imageUrl, type, score
                     alt={title}
                     className="listing-image"
                     loading="lazy"
+                    decoding="async"
                     width="400"
                     height="250"
-                    onError={(e) => { e.target.src = 'https://via.placeholder.com/400x300?text=Resim+Yok'; }}
+                    onError={(e) => {
+                        if (e.target.src !== 'https://via.placeholder.com/400x300?text=Resim+Yok') {
+                            e.target.src = 'https://via.placeholder.com/400x300?text=Resim+Yok';
+                        }
+                    }}
                 />
                 <span className="listing-tag">{type}</span>
                 {score && parseInt(score) > 0 && (

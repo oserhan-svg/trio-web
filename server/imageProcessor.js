@@ -1,3 +1,7 @@
+const os = require('os');
+const path = require('path');
+const fs = require('fs');
+const { spawn } = require('child_process');
 const sharp = require('sharp');
 const { createClient } = require('@supabase/supabase-js');
 const fetch = require('node-fetch');
@@ -124,12 +128,17 @@ async function processListingImages(listingId, imageUrls) {
             // 1. Download
             const rawBuffer = await downloadImage(url);
 
-            // 2. Crop
-            const cleanBuffer = await removeWatermark(rawBuffer);
+            // 2. Crop & Convert to WebP
+            const processedBuffer = await removeWatermark(rawBuffer);
+
+            // Convert to WebP for optimization
+            const webpBuffer = await sharp(processedBuffer)
+                .webp({ quality: 80 }) // Good balance of quality and size
+                .toBuffer();
 
             // 3. Upload
-            const filename = `listings/${listingId}/${Date.now()}_${i}.jpg`;
-            const publicUrl = await uploadToStorage(cleanBuffer, filename);
+            const filename = `listings/${listingId}/${Date.now()}_${i}.webp`;
+            const publicUrl = await uploadToStorage(webpBuffer, filename);
 
             newUrls.push(publicUrl);
             console.log(`> Uploaded: ${publicUrl}`);

@@ -17,19 +17,15 @@ export const fetchPropertyDetail = async (id) => {
         return cached;
     }
 
-    try {
-        const response = await fetch(`${config.API_BASE_URL}/listings/${id}`);
-        if (!response.ok) throw new Error('İlan bulunamadı');
-        const data = await response.json();
+    const response = await fetch(`${config.API_BASE_URL}/listings/${id}`);
+    if (!response.ok) throw new Error('İlan bulunamadı');
+    const data = await response.json();
 
-        // Update cache
-        propertyCache.set(String(id), data);
-        lastPropertyFetchTimes.set(String(id), now);
+    // Update cache
+    propertyCache.set(String(id), data);
+    lastPropertyFetchTimes.set(String(id), now);
 
-        return data;
-    } catch (err) {
-        throw err;
-    }
+    return data;
 };
 
 /**

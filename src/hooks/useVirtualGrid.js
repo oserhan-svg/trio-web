@@ -9,15 +9,22 @@ export const useVirtualGrid = (items, {
     overscan = 4,
     containerRef
 } = {}) => {
-    const [scrollTop, setScrollTop] = useState(window.scrollY);
-    const [containerHeight, setContainerHeight] = useState(window.innerHeight);
+    const [scrollTop, setScrollTop] = useState(typeof window !== 'undefined' ? window.scrollY : 0);
+    const [containerHeight, setContainerHeight] = useState(typeof window !== 'undefined' ? window.innerHeight : 0);
+    const [gridOffsetTop, setGridOffsetTop] = useState(0);
 
     const rowCount = Math.ceil(items.length / columnCount);
     const totalHeight = rowCount * rowHeight;
 
+    // Measure container position
+    useEffect(() => {
+        if (containerRef.current) {
+            setGridOffsetTop(containerRef.current.getBoundingClientRect().top + window.scrollY);
+        }
+    }, [containerRef]);
+
     useEffect(() => {
         const handleScroll = () => {
-            // Use requestAnimationFrame for smoother updates and to avoid mid-frame inconsistencies
             requestAnimationFrame(() => {
                 setScrollTop(window.scrollY);
             });
@@ -25,6 +32,9 @@ export const useVirtualGrid = (items, {
 
         const handleResize = () => {
             setContainerHeight(window.innerHeight);
+            if (containerRef.current) {
+                setGridOffsetTop(containerRef.current.getBoundingClientRect().top + window.scrollY);
+            }
         };
 
         window.addEventListener('scroll', handleScroll, { passive: true });
@@ -34,15 +44,9 @@ export const useVirtualGrid = (items, {
             window.removeEventListener('scroll', handleScroll);
             window.removeEventListener('resize', handleResize);
         };
-    }, []);
+    }, [containerRef]);
 
     const virtualItems = useMemo(() => {
-        const container = containerRef.current;
-        if (!container) return [];
-
-        // Get actual vertical offset of the grid container
-        const gridOffsetTop = container.getBoundingClientRect().top + window.scrollY;
-
         // Calculate which row is currently at the top of the viewport
         const relativeScrollTop = Math.max(0, scrollTop - gridOffsetTop);
 
@@ -61,7 +65,7 @@ export const useVirtualGrid = (items, {
                         index,
                         style: {
                             position: 'absolute',
-                            top: `${row * rowHeight}px`, // Use explicit TOP instead of transform
+                            top: `${row * rowHeight}px`,
                             left: `${(col / columnCount) * 100}%`,
                             width: `${(1 / columnCount) * 100}%`,
                             height: `${rowHeight}px`,
@@ -72,7 +76,7 @@ export const useVirtualGrid = (items, {
             }
         }
         return visibleItems;
-    }, [items, scrollTop, containerHeight, rowHeight, columnCount, overscan, rowCount, containerRef]);
+    }, [items, scrollTop, gridOffsetTop, containerHeight, rowHeight, columnCount, overscan, rowCount]);
 
     return {
         virtualItems,

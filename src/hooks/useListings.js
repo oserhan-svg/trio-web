@@ -114,36 +114,40 @@ const useListings = () => {
     // Memoize filtered listings using debounced filters
     const filteredListings = useMemo(() => {
         let filtered = listings;
+        const searchTermLower = debouncedFilters.searchTerm?.toLowerCase();
+        const categoryFilter = debouncedFilters.category;
+        const bedroomsFilter = debouncedFilters.bedrooms;
+        const priceMaxFilter = debouncedFilters.priceMax;
+        const amenitiesLower = debouncedFilters.amenities?.map(a => a.toLowerCase()) || [];
 
         // Keyword/Search filter
-        if (debouncedFilters.searchTerm) {
-            const term = debouncedFilters.searchTerm.toLowerCase();
+        if (searchTermLower) {
             filtered = filtered.filter(l =>
-                l.title?.toLowerCase().includes(term) ||
-                l.location?.toLowerCase().includes(term) ||
-                l.type?.toLowerCase().includes(term) ||
-                l.description?.toLowerCase().includes(term)
+                l.title?.toLowerCase().includes(searchTermLower) ||
+                l.location?.toLowerCase().includes(searchTermLower) ||
+                l.type?.toLowerCase().includes(searchTermLower) ||
+                l.description?.toLowerCase().includes(searchTermLower)
             );
         }
 
-        if (debouncedFilters.category) {
-            filtered = filtered.filter(l => l.category === debouncedFilters.category);
+        if (categoryFilter) {
+            filtered = filtered.filter(l => l.category === categoryFilter);
         }
 
-        if (debouncedFilters.bedrooms) {
+        if (bedroomsFilter) {
             filtered = filtered.filter(l =>
-                l.description?.includes(debouncedFilters.bedrooms) ||
-                l.title?.includes(debouncedFilters.bedrooms)
+                l.description?.includes(bedroomsFilter) ||
+                l.title?.includes(bedroomsFilter)
             );
         }
 
-        if (debouncedFilters.priceMax) {
-            filtered = filtered.filter(l => l.priceNumeric <= debouncedFilters.priceMax);
+        if (priceMaxFilter) {
+            filtered = filtered.filter(l => l.priceNumeric <= priceMaxFilter);
         }
 
-        if (debouncedFilters.amenities?.length > 0) {
+        if (amenitiesLower.length > 0) {
             filtered = filtered.filter(l =>
-                debouncedFilters.amenities.every(a => l.description?.toLowerCase().includes(a.toLowerCase()))
+                amenitiesLower.every(a => l.description?.toLowerCase().includes(a))
             );
         }
 

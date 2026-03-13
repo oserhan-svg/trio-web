@@ -68,7 +68,12 @@ const useListings = () => {
             // Pre-calculate numeric price for efficient filtering
             const normalizedData = data.map(item => ({
                 ...item,
-                priceNumeric: parseInt(item.price?.split(',')[0]?.replace(/[^\d]/g, '')) || 0
+                priceNumeric: parseInt(item.price?.split(',')[0]?.replace(/[^\d]/g, '')) || 0,
+                searchString: [item.title, item.location, item.type, item.description]
+                    .filter(Boolean)
+                    .join(' ')
+                    .toLowerCase(),
+                descriptionLower: item.description?.toLowerCase() || ''
             }));
 
             // Update cache
@@ -129,12 +134,7 @@ const useListings = () => {
 
         // Keyword/Search filter
         if (searchTermLower) {
-            filtered = filtered.filter(l =>
-                l.title?.toLowerCase().includes(searchTermLower) ||
-                l.location?.toLowerCase().includes(searchTermLower) ||
-                l.type?.toLowerCase().includes(searchTermLower) ||
-                l.description?.toLowerCase().includes(searchTermLower)
-            );
+            filtered = filtered.filter(l => l.searchString?.includes(searchTermLower));
         }
 
         if (categoryFilter) {
@@ -154,7 +154,7 @@ const useListings = () => {
 
         if (amenitiesLower.length > 0) {
             filtered = filtered.filter(l =>
-                amenitiesLower.every(a => l.description?.toLowerCase().includes(a))
+                amenitiesLower.every(a => l.descriptionLower?.includes(a))
             );
         }
 

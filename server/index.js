@@ -196,8 +196,12 @@ app.get('/api/stats', async (req, res) => {
 // Authentication Routes
 app.post('/api/auth/login', async (req, res) => {
     const { username, password } = req.body;
-    const MASTER_USERNAME = process.env.ADMIN_USERNAME || 'admin';
-    const MASTER_PASSWORD = process.env.ADMIN_PASSWORD || 'TrioEmlak2024!';
+    const MASTER_USERNAME = process.env.ADMIN_USERNAME;
+    const MASTER_PASSWORD = process.env.ADMIN_PASSWORD;
+
+    if (!MASTER_USERNAME || !MASTER_PASSWORD) {
+        return res.status(500).json({ error: 'Server is not configured for authentication.' });
+    }
 
     if (username === MASTER_USERNAME && password === MASTER_PASSWORD) {
         // Return a mock token for development

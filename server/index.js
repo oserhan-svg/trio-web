@@ -267,22 +267,28 @@ app.get('/api/external-listings', async (req, res) => {
         });
 
         // 5. Apply User Filters
-        let filtered = allListings;
-        if (minPrice) filtered = filtered.filter(x => x.priceNumber >= parseFloat(minPrice));
-        if (maxPrice) filtered = filtered.filter(x => x.priceNumber <= parseFloat(maxPrice));
-        if (district) filtered = filtered.filter(x => x.district.toLowerCase().includes(district.toLowerCase()));
-        if (listing_type) filtered = filtered.filter(x => x.listing_type === listing_type);
-        if (category) filtered = filtered.filter(x => x.category === category);
-        if (rooms) {
-            if (rooms === '5+') {
-                filtered = filtered.filter(x => {
+        const minP = minPrice ? parseFloat(minPrice) : null;
+        const maxP = maxPrice ? parseFloat(maxPrice) : null;
+        const distLower = district ? district.toLowerCase() : null;
+
+        const filtered = allListings.filter(x => {
+            if (minP !== null && x.priceNumber < minP) return false;
+            if (maxP !== null && x.priceNumber > maxP) return false;
+            if (distLower !== null && !x.district.toLowerCase().includes(distLower)) return false;
+            if (listing_type && x.listing_type !== listing_type) return false;
+            if (category && x.category !== category) return false;
+
+            if (rooms) {
+                if (rooms === '5+') {
                     const r = parseInt(x.rooms);
-                    return !isNaN(r) && r >= 5;
-                });
-            } else {
-                filtered = filtered.filter(x => x.rooms && x.rooms.startsWith(rooms));
+                    if (isNaN(r) || r < 5) return false;
+                } else {
+                    if (!x.rooms || !x.rooms.startsWith(rooms)) return false;
+                }
             }
-        }
+
+            return true;
+        });
 
         // 6. Sort by Advantage Score & Limit (Top 10 per Category)
         const groupedByCategory = {};

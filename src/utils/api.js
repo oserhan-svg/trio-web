@@ -1,4 +1,4 @@
-import config from '../config';
+import config from '../config.js';
 
 // Individual property cache
 const propertyCache = new Map();

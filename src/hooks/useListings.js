@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
-import config from '../config';
+import config from '../config.js';
 
 // Simple in-memory cache to store API responses
 let listingsCache = null;

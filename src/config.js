@@ -11,7 +11,10 @@ const config = {
                 return 'https://trio-web-server.onrender.com/api';
             }
         }
-        return import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+        if (typeof import.meta !== 'undefined' && import.meta.env) {
+            return import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+        }
+        return 'http://localhost:5000/api';
     })(),
 
     // Cache configuration

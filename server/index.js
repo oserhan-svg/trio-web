@@ -4,6 +4,7 @@ const morgan = require('morgan');
 const { Pool } = require('pg');
 const dns = require('dns');
 const rateLimit = require('./middleware/rateLimit');
+const authenticateToken = require('./middleware/auth');
 require('dotenv').config();
 
 // FIX: Force IPv4 to prevent Render/Supabase connection issues (ENETUNREACH)
@@ -138,7 +139,7 @@ app.get('/api/listings/:id', async (req, res) => {
 });
 
 // Admin & Management Routes
-app.patch('/api/listings/:id/status', async (req, res) => {
+app.patch('/api/listings/:id/status', authenticateToken, async (req, res) => {
     const { status } = req.body;
     if (!['active', 'sold', 'passive'].includes(status)) {
         return res.status(400).json({ error: 'Invalid status' });
@@ -161,7 +162,7 @@ app.patch('/api/listings/:id/status', async (req, res) => {
     }
 });
 
-app.delete('/api/listings/:id', async (req, res) => {
+app.delete('/api/listings/:id', authenticateToken, async (req, res) => {
     try {
         const result = await pool.query('DELETE FROM listings WHERE id = $1 RETURNING *', [req.params.id]);
         if (result.rowCount === 0) {
@@ -193,6 +194,8 @@ app.get('/api/stats', async (req, res) => {
     }
 });
 
+const jwt = require('jsonwebtoken');
+
 // Authentication Routes
 app.post('/api/auth/login', async (req, res) => {
     const { username, password } = req.body;
@@ -200,10 +203,12 @@ app.post('/api/auth/login', async (req, res) => {
     const MASTER_PASSWORD = process.env.ADMIN_PASSWORD || 'TrioEmlak2024!';
 
     if (username === MASTER_USERNAME && password === MASTER_PASSWORD) {
-        // Return a mock token for development
+        const JWT_SECRET = process.env.JWT_SECRET || 'trio-emlak-super-secret-key-2024';
+        const token = jwt.sign({ role: 'admin', name: 'Trio Admin' }, JWT_SECRET, { expiresIn: '24h' });
+
         res.json({
             success: true,
-            token: 'trio-adm-session-' + Date.now(),
+            token: token,
             user: { role: 'admin', name: 'Trio Admin' }
         });
     } else {

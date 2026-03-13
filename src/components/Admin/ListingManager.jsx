@@ -14,9 +14,13 @@ const ListingManager = () => {
     // Use callbacks to ensure stable references for child components
     const handleStatusChange = React.useCallback(async (id, newStatus) => {
         try {
+            const token = localStorage.getItem('trio_admin_session');
             const response = await fetch(`${config.API_BASE_URL}/listings/${id}/status`, {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({ status: newStatus })
             });
 
@@ -34,8 +38,12 @@ const ListingManager = () => {
         if (!window.confirm('Bu ilanı tamamen silmek istediğinize emin misiniz?')) return;
 
         try {
+            const token = localStorage.getItem('trio_admin_session');
             const response = await fetch(`${config.API_BASE_URL}/listings/${id}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
             });
 
             if (response.ok) {

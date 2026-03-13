@@ -68,10 +68,13 @@ const FilterSidebar = memo(({ onFilterChange }) => {
 
     const handleAmenityToggle = useCallback((amenity) => {
         setFilters(prev => {
-            const newAmenities = prev.amenities.includes(amenity)
-                ? prev.amenities.filter(a => a !== amenity)
-                : [...prev.amenities, amenity];
-            const newFilters = { ...prev, amenities: newAmenities };
+            const amenitiesSet = new Set(prev.amenities);
+            if (amenitiesSet.has(amenity)) {
+                amenitiesSet.delete(amenity);
+            } else {
+                amenitiesSet.add(amenity);
+            }
+            const newFilters = { ...prev, amenities: Array.from(amenitiesSet) };
             onFilterChange?.(newFilters);
             return newFilters;
         });

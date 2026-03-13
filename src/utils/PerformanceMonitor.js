@@ -14,8 +14,8 @@ export const initPerformanceMonitoring = () => {
                 id,
                 timestamp: new Date().toISOString()
             });
-        } catch {
-            // Silently fail logging
+        } catch (error) {
+            console.error('[Performance] Error logging metric:', error);
         }
     };
 

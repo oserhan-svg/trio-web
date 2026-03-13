@@ -159,9 +159,10 @@ const useListings = () => {
         }
 
         // Map for favorites only on the filtered result
+        const favoritesSet = new Set(favorites);
         return filtered.map(item => ({
             ...item,
-            isFavorite: favorites.includes(item.id)
+            isFavorite: favoritesSet.has(item.id)
         }));
     }, [listings, debouncedFilters, favorites]);
 

@@ -75,15 +75,17 @@ export const getListingStatus = (id, price, title, description, status) => {
     const isSold = status === 'sold';
     const isPassive = status === 'passive';
     const isNew = id > (Date.now() - 7 * 24 * 60 * 60 * 1000); // 7 days
-    const isFirsat = price?.toLowerCase().includes('fırsat') ||
-        title?.toLowerCase().includes('fırsat') ||
-        description?.toLowerCase().includes('fırsat');
+    const isFirsat = Boolean(
+        (price && String(price).toLowerCase().includes('fırsat')) ||
+        (title && String(title).toLowerCase().includes('fırsat')) ||
+        (description && String(description).toLowerCase().includes('fırsat'))
+    );
 
     return {
         isSold,
         isPassive,
-        isNew: isNew && !isPassive && !isSold,
-        isFirsat: isFirsat && !isPassive && !isSold,
-        isPremium: !isNew && !isFirsat && !isPassive && !isSold
+        isNew: Boolean(isNew && !isPassive && !isSold),
+        isFirsat: Boolean(isFirsat && !isPassive && !isSold),
+        isPremium: Boolean(!isNew && !isFirsat && !isPassive && !isSold)
     };
 };

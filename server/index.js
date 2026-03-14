@@ -100,7 +100,70 @@ app.get('/', (req, res) => {
 
 app.get('/api/listings', async (req, res) => {
     try {
-        const result = await pool.query('SELECT * FROM listings ORDER BY created_at DESC');
+        const page = Math.max(1, parseInt(req.query.page) || 1);
+        const limit = parseInt(req.query.limit) || 10;
+        const offset = (page - 1) * limit;
+
+        const { searchTerm, category, bedrooms, priceMax, amenities } = req.query;
+
+        let queryParams = [];
+        let whereClauses = [];
+
+        if (searchTerm) {
+            queryParams.push(`%${searchTerm}%`);
+            const paramIdx = queryParams.length;
+            whereClauses.push(`(
+                LOWER(title) LIKE LOWER($${paramIdx}) OR
+                LOWER(location) LIKE LOWER($${paramIdx}) OR
+                LOWER(type) LIKE LOWER($${paramIdx}) OR
+                LOWER(full_description) LIKE LOWER($${paramIdx})
+            )`);
+        }
+
+        if (category) {
+            queryParams.push(category);
+            whereClauses.push(`category = $${queryParams.length}`);
+        }
+
+        if (bedrooms) {
+            queryParams.push(`%${bedrooms}%`);
+            const paramIdx = queryParams.length;
+            whereClauses.push(`(
+                full_description LIKE $${paramIdx} OR
+                title LIKE $${paramIdx}
+            )`);
+        }
+
+        if (priceMax) {
+            queryParams.push(priceMax);
+            // Assuming price is stored as string '1.200.000 TL', we might need to handle this carefully.
+            // If it's a numeric field in the DB, simple comparison works.
+            // Let's assume for now price numeric value is extractable or price is stored in a way that allows comparison.
+            // Actually, the previous useListings.js parsed price.
+            // In SQL: CAST(REPLACE(REPLACE(price, ' TL', ''), '.', '') AS NUMERIC) <= $paramIdx
+            whereClauses.push(`CAST(NULLIF(REGEXP_REPLACE(price, '[^0-9]', '', 'g'), '') AS NUMERIC) <= $${queryParams.length}`);
+        }
+
+        if (amenities) {
+            const amenityList = amenities.split(',').filter(Boolean);
+            if (amenityList.length > 0) {
+                // All amenities must be present in full_description
+                amenityList.forEach(amenity => {
+                    queryParams.push(`%${amenity}%`);
+                    whereClauses.push(`LOWER(full_description) LIKE LOWER($${queryParams.length})`);
+                });
+            }
+        }
+
+        const whereString = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
+
+        const countQuery = `SELECT COUNT(*) FROM listings ${whereString}`;
+        const countResult = await pool.query(countQuery, queryParams);
+        const total = parseInt(countResult.rows[0].count);
+        const totalPages = Math.ceil(total / limit);
+
+        const dataQuery = `SELECT * FROM listings ${whereString} ORDER BY created_at DESC LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}`;
+        const result = await pool.query(dataQuery, [...queryParams, limit, offset]);
 
         // Transform data to match original JSON structure if needed (e.g., camelCase for fullDescription)
         const transformed = result.rows.map(row => ({
@@ -109,7 +172,15 @@ app.get('/api/listings', async (req, res) => {
             imageUrl: row.image_url
         }));
 
-        res.json(transformed);
+        res.json({
+            data: transformed,
+            pagination: {
+                total,
+                page,
+                limit,
+                totalPages
+            }
+        });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Database error', details: err.message });

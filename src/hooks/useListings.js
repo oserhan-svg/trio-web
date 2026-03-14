@@ -3,12 +3,15 @@ import config from '../config';
 
 // Simple in-memory cache to store API responses
 let listingsCache = null;
-let lastFetchTime = 0;
 
 const useListings = () => {
     const [listings, setListings] = useState(listingsCache || []);
     const [loading, setLoading] = useState(!listingsCache);
     const [error, setError] = useState(null);
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalItems, setTotalItems] = useState(0);
+    const [limit, setLimit] = useState(10);
 
     // Load initial filters from localStorage or use defaults
     const [filters, setFilters] = useState(() => {
@@ -42,19 +45,22 @@ const useListings = () => {
     const [isFiltering, setIsFiltering] = useState(false);
 
     // Fetch listings from API with caching
-    const fetchListings = async (force = false) => {
-        const now = Date.now();
-
-        // Return cached data if it's fresh enough and not forced
-        if (!force && listingsCache && (now - lastFetchTime < config.CACHE_DURATION_MS)) {
-            setLoading(false);
-            setListings(listingsCache);
-            return;
-        }
-
+    const fetchListings = useCallback(async (currentPage, currentLimit, activeFilters) => {
         try {
             setLoading(true);
-            const response = await fetch(`${config.API_BASE_URL}/listings`);
+
+            const queryParams = new URLSearchParams({
+                page: currentPage,
+                limit: currentLimit,
+            });
+
+            if (activeFilters.searchTerm) queryParams.append('searchTerm', activeFilters.searchTerm);
+            if (activeFilters.category) queryParams.append('category', activeFilters.category);
+            if (activeFilters.bedrooms) queryParams.append('bedrooms', activeFilters.bedrooms);
+            if (activeFilters.priceMax && activeFilters.priceMax < 50000000) queryParams.append('priceMax', activeFilters.priceMax);
+            if (activeFilters.amenities && activeFilters.amenities.length > 0) queryParams.append('amenities', activeFilters.amenities.join(','));
+
+            const response = await fetch(`${config.API_BASE_URL}/listings?${queryParams.toString()}`);
 
             if (!response.ok) {
                 if (response.status === 429) throw new Error('Çok fazla istek gönderildi. Lütfen bir süre bekleyin.');
@@ -63,7 +69,13 @@ const useListings = () => {
                 throw new Error('İlanlar yüklenirken bir hata oluştu');
             }
 
-            const data = await response.json();
+            const json = await response.json();
+            const data = json.data || [];
+
+            if (json.pagination) {
+                setTotalPages(json.pagination.totalPages);
+                setTotalItems(json.pagination.total);
+            }
 
             // Pre-calculate numeric price for efficient filtering
             const normalizedData = data.map(item => ({
@@ -73,7 +85,6 @@ const useListings = () => {
 
             // Update cache
             listingsCache = normalizedData;
-            lastFetchTime = now;
 
             setListings(normalizedData);
             setError(null);
@@ -83,22 +94,20 @@ const useListings = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, []); // Removed unused dependencies page, limit, debouncedFilters
 
     useEffect(() => {
-        // Initial fetch only if not already loading/data present (optimization)
-        if (!listingsCache) {
-            fetchListings();
-        } else {
-            // If we have cache, ensuring state is synced
-            setListings(listingsCache);
-            setLoading(false);
-        }
-    }, []);
+        // Reset to page 1 when filters change (debouncedFilters update)
+        setPage(1);
+    }, [debouncedFilters]);
+
+    useEffect(() => {
+        fetchListings(page, limit, debouncedFilters);
+    }, [page, limit, debouncedFilters, fetchListings]);
 
     const refreshCache = useCallback(() => {
-        return fetchListings(true);
-    }, []);
+        return fetchListings(page, limit, debouncedFilters);
+    }, [fetchListings, page, limit, debouncedFilters]);
 
     // Persist filters to localStorage
     useEffect(() => {
@@ -118,52 +127,13 @@ const useListings = () => {
         localStorage.setItem('trio_favorites', JSON.stringify(favorites));
     }, [favorites]);
 
-    // Memoize filtered listings using debounced filters
+    // Map for favorites only on the fetched result (filtering is now backend-side)
     const filteredListings = useMemo(() => {
-        let filtered = listings;
-        const searchTermLower = debouncedFilters.searchTerm?.toLowerCase();
-        const categoryFilter = debouncedFilters.category;
-        const bedroomsFilter = debouncedFilters.bedrooms;
-        const priceMaxFilter = debouncedFilters.priceMax;
-        const amenitiesLower = debouncedFilters.amenities?.map(a => a.toLowerCase()) || [];
-
-        // Keyword/Search filter
-        if (searchTermLower) {
-            filtered = filtered.filter(l =>
-                l.title?.toLowerCase().includes(searchTermLower) ||
-                l.location?.toLowerCase().includes(searchTermLower) ||
-                l.type?.toLowerCase().includes(searchTermLower) ||
-                l.description?.toLowerCase().includes(searchTermLower)
-            );
-        }
-
-        if (categoryFilter) {
-            filtered = filtered.filter(l => l.category === categoryFilter);
-        }
-
-        if (bedroomsFilter) {
-            filtered = filtered.filter(l =>
-                l.description?.includes(bedroomsFilter) ||
-                l.title?.includes(bedroomsFilter)
-            );
-        }
-
-        if (priceMaxFilter) {
-            filtered = filtered.filter(l => l.priceNumeric <= priceMaxFilter);
-        }
-
-        if (amenitiesLower.length > 0) {
-            filtered = filtered.filter(l =>
-                amenitiesLower.every(a => l.description?.toLowerCase().includes(a))
-            );
-        }
-
-        // Map for favorites only on the filtered result
-        return filtered.map(item => ({
+        return listings.map(item => ({
             ...item,
             isFavorite: favorites.includes(item.id)
         }));
-    }, [listings, debouncedFilters, favorites]);
+    }, [listings, favorites]);
 
     const handleFilterChange = useCallback((newFilters) => {
         setFilters(prev => ({ ...prev, ...newFilters }));
@@ -225,7 +195,12 @@ const useListings = () => {
         isFiltering,
         loading,
         error,
-        totalCount: filteredListings.length,
+        totalCount: totalItems,
+        page,
+        setPage,
+        totalPages,
+        limit,
+        setLimit,
     };
 };
 

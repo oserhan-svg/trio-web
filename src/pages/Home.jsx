@@ -10,7 +10,7 @@ import PageTransition from '../components/UI/PageTransition';
 import './Home.css';
 
 const Home = () => {
-    const { listings, handleFilterChange, totalCount, toggleFavorite, isFiltering, loading } = useListings();
+    const { listings, handleFilterChange, totalCount, toggleFavorite, isFiltering, loading, page, setPage, totalPages } = useListings();
     const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
 
     return (
@@ -88,27 +88,37 @@ const Home = () => {
                                 )}
                             </div>
 
-                            {!loading && listings.length > 0 && (
+                            {!loading && listings.length > 0 && totalPages > 1 && (
                                 <nav className="pagination" aria-label="Sayfalama">
                                     <motion.button
                                         className="pagination-btn"
-                                        whileHover={{ scale: 1.05 }}
-                                        whileTap={{ scale: 0.95 }}
-                                        disabled
+                                        whileHover={{ scale: page > 1 ? 1.05 : 1 }}
+                                        whileTap={{ scale: page > 1 ? 0.95 : 1 }}
+                                        disabled={page === 1}
                                         aria-label="Önceki Sayfa"
+                                        onClick={() => setPage(p => Math.max(1, p - 1))}
                                     >
                                         ← Önceki
                                     </motion.button>
                                     <div className="page-numbers">
-                                        <button className="page-num active" aria-current="page">1</button>
-                                        <button className="page-num">2</button>
-                                        <button className="page-num">3</button>
+                                        {Array.from({ length: totalPages }).map((_, i) => (
+                                            <button
+                                                key={i + 1}
+                                                className={`page-num ${page === i + 1 ? 'active' : ''}`}
+                                                aria-current={page === i + 1 ? 'page' : undefined}
+                                                onClick={() => setPage(i + 1)}
+                                            >
+                                                {i + 1}
+                                            </button>
+                                        ))}
                                     </div>
                                     <motion.button
                                         className="pagination-btn"
-                                        whileHover={{ scale: 1.05 }}
-                                        whileTap={{ scale: 0.95 }}
+                                        whileHover={{ scale: page < totalPages ? 1.05 : 1 }}
+                                        whileTap={{ scale: page < totalPages ? 0.95 : 1 }}
+                                        disabled={page === totalPages}
                                         aria-label="Sonraki Sayfa"
+                                        onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                                     >
                                         Sonraki →
                                     </motion.button>
